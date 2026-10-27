@@ -1,0 +1,20 @@
+# dataset + env
+data/
+.venv/
+.venv_nuscenes
+.env
+
+# YOLO weights
+*.pt
+
+# pipeline outputs
+paths_for_samples.json
+boxes_dict.json
+boxes_dict_for_fiftyone.json
+debug_unknown/
+
+# misc
+content/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

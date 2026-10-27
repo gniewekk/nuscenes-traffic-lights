@@ -1,0 +1,23 @@
+.git
+.venv
+.venv_nusc
+.venv_nuscenes
+**/__pycache__/
+*.pyc
+.ipynb_checkpoints
+
+# large / runtime-mounted
+data/
+*.pt
+debug_unknown/
+other_projects/
+content/
+
+# generated outputs (bind-mounted from host at runtime)
+paths_for_samples.json
+boxes_dict.json
+boxes_dict_for_fiftyone.json
+
+# local IDE / env
+.env
+*.ipynb

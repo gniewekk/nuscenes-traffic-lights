@@ -1,0 +1,60 @@
+# nuScenes traffic-lights — Docker
+#
+# Host needs: Docker, NVIDIA driver, NVIDIA Container Toolkit (for GPU detect).
+#
+#   docker compose build
+#   docker compose run --rm pipeline          # extract → detect (GPU) → export
+#   docker compose up vis                     # Mongo + FiftyOne App → http://localhost:5151
+
+services:
+  pipeline:
+    build: .
+    image: nuscenes-traffic-lights:latest
+    working_dir: /app
+    volumes:
+      # whole project (JSON outputs + data + weights stay on host)
+      - ./:/app
+      # hide host venv so container uses image Python
+      - /app/.venv
+    environment:
+      PYTHONUNBUFFERED: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+    gpus: all
+    # use image python, not .venv from Makefile default
+    command: ["make", "PYTHON=python", "pipeline"]
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - fo_mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  vis:
+    image: nuscenes-traffic-lights:latest
+    build: .
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - /app/.venv
+    ports:
+      - "5151:5151"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      FIFTYONE_DATABASE_URI: mongodb://mongo:27017
+      FIFTYONE_DEFAULT_APP_ADDRESS: "0.0.0.0"
+      FIFTYONE_DEFAULT_APP_PORT: "5151"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    # no gpus — App is CPU-only
+    command: ["python", "traffic_lights/src/visualize.py"]
+
+volumes:
+  fo_mongo_data:
